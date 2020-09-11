@@ -15,7 +15,7 @@ exports.sendFriendRequest = (req, res) => {
 			db.User.findOneAndUpdate(
 				{ username: req.body.username },
 				{ $push: { friendRequests: req.body.currentUser } }
-			).exec((err, result) => {
+			).exec((err, resultTwo) => {
 				if (err) {
 					console.log(err);
 					return;
@@ -31,11 +31,14 @@ exports.getFriendRequests = (req, res) => {
 	db.User.findOne({ _id: req.params.id })
 		.populate("friendRequests")
 		.exec((err, result) => {
+			console.log(result);
 			if (err) {
 				console.log(err);
 				return;
-			} else {
+			} else if (result.friendRequests[0]) {
 				res.json(result.friendRequests);
+			} else {
+				res.json(null);
 			}
 		});
 };
@@ -47,6 +50,7 @@ exports.getFriendRequestsAndFriends = (req, res) => {
 			return;
 		} else {
 			res.json(result);
+			console.log("RESULT:", result);
 		}
 	});
 };
@@ -74,9 +78,13 @@ exports.newComment = (req, res) => {
 			console.log("error saving post");
 			return;
 		} else {
-			db.Post.findByIdAndUpdate(req.body.postId, {
-				$push: { comments: comment },
-			}).exec((error, secondResult) => {
+			db.Post.findByIdAndUpdate(
+				req.body.postId,
+				{
+					$push: { comments: comment },
+				},
+				{ new: true }
+			).exec((error, secondResult) => {
 				if (error) {
 					console.log(error);
 				} else {
@@ -108,22 +116,26 @@ exports.acceptFriendRequest = (req, res) => {
 			{ username: req.body.request },
 			{
 				$push: { friends: req.params.id },
-				$pull: { friendRequests: req.params.id },
-			}
-		).exec((err, sender) => {
-			if (err) {
-				console.log(err);
+			},
+			{ new: true }
+		).exec((error, sender) => {
+			if (error) {
+				console.log(error);
 				return;
 			} else {
-				db.User.findByIdAndUpdate(req.params.id, {
-					$push: { friends: sender._id },
-					$pull: { friendRequests: sender._id },
-				}).exec((err, accepter) => {
+				db.User.findByIdAndUpdate(
+					req.params.id,
+					{
+						$push: { friends: sender._id },
+						$pull: { friendRequests: sender._id },
+					},
+					{ new: true }
+				).exec((err, accepter) => {
 					if (err) {
 						console.log(err);
 					} else {
-						console.log("successfully added friend!");
-						res.json("it works");
+						console.log(accepter);
+						res.json(accepter);
 					}
 				});
 			}
@@ -138,15 +150,18 @@ exports.declineFriendRequest = (req, res) => {
 			console.log(err);
 			return;
 		} else {
-			db.User.findByIdAndUpdate(req.params.id, {
-				$pull: { friendRequests: result._id },
-			}).exec((error, whoDeclined) => {
+			db.User.findByIdAndUpdate(
+				req.params.id,
+				{
+					$pull: { friendRequests: result._id },
+				},
+				{ new: true }
+			).exec((error, whoDeclined) => {
 				if (error) {
 					console.log(error);
 					return;
 				} else {
-					console.log("friend request declined");
-					res.json({ msg: "declined fr" });
+					res.json(whoDeclined);
 				}
 			});
 		}
@@ -185,13 +200,44 @@ exports.getLikes = (req, res) => {
 			});
 		}
 	});
-	// db.Post.findByIdAndUpdate(req.params.postId, { $push: { likes: req.body.currentUser } })
-	//     .exec((err, result) => {
-	//         if (err) {
-	//             console.log(err);
-	//         }
-	//         else {
-	//             res.json(req.body.likes);
-	//         }
-	//     })
+};
+
+exports.removeFriend = (req, res) => {
+	db.User.findOneAndUpdate(
+		{ username: req.params.friendUsername },
+		{
+			$pull: { friends: req.params.userId },
+		},
+		{ new: true }
+	).exec((err, result) => {
+		if (err) {
+			console.log(err);
+		} else {
+			db.User.findByIdAndUpdate(
+				req.params.userId,
+				{
+					$pull: { friends: result._id },
+				},
+				{ new: true }
+			).exec((error, whoRemoved) => {
+				if (error) {
+					console.log(err);
+				} else {
+					console.log(whoRemoved);
+					res.json(whoRemoved);
+				}
+			});
+		}
+	});
+};
+
+exports.getProfile = (req, res) => {
+	db.User.findOne({ username: req.params.username }).exec((err, result) => {
+		if (err) {
+			console.log(err);
+			res.json(null);
+		} else {
+			res.json(result);
+		}
+	});
 };

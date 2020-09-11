@@ -1,79 +1,81 @@
-const cors = require("cors");
 const loginController = require("../controllers/loginController");
 const actionController = require("../controllers/actionController");
 const loadController = require("../controllers/loadController");
+// const multer = require("multer");
+// const upload = multer({ dest: 'uploads/' })
 
-const corsOptions = {
-	origin: "http://localhost:8000",
-	optionsSuccessStatus: 200,
-};
+// const storage = multer.memoryStorage({
+// 	destination: (req, file, cb) => {
+// 		cb(null, "uploads");
+// 	},
+// 	filename: (req, file, cb) => {
+// 		cb(null, file.fieldname + "-" + Date.now());
+// 	},
+// });
+
+// const upload = multer({ storage: storage });
+
+// const multipartMiddleware = (req, res, next) => {
+// 	req.rawBody = req.body;
+// 	if (req.headers["Content-Type"] === "multipart/form-data") {
+// 		req.body = req.body;
+// 		// upload.single("avatar");
+// 	}
+// 	next();
+// };
 
 module.exports = function (app) {
-	app.post("/api/login", cors(corsOptions), loginController.loginRequest);
+	app.post("/api/login", loginController.loginRequest);
 
-	app.post("/api/signup", cors(corsOptions), loginController.signUpRequest);
+	app.post("/api/signup", loginController.signUpRequest);
 
-	app.post(
-		"/api/friend-request",
-		cors(corsOptions),
-		actionController.sendFriendRequest
-	);
+	app.post("/api/friend-request", actionController.sendFriendRequest);
 
-	app.get(
-		"/api/friend-request/:id",
-		cors(corsOptions),
-		actionController.getFriendRequests
-	);
+	app.get("/api/friend-request/:id", actionController.getFriendRequests);
+
+	app.get("/api/profile/:username", actionController.getProfile);
 
 	app.get(
 		"/api/friend-request/friends/:username",
-		cors(corsOptions),
 		actionController.getFriendRequestsAndFriends
 	);
 
 	app.post(
 		"/api/friend-request/:id/accept",
-		cors(corsOptions),
 		actionController.acceptFriendRequest
 	);
 
 	app.post(
 		"/api/friend-request/:id/decline",
-		cors(corsOptions),
 		actionController.declineFriendRequest
 	);
 
-	app.post("/api/new-post", cors(corsOptions), actionController.newPost);
+	app.put(
+		"/api/friends/:userId/:friendUsername",
+		actionController.removeFriend
+	);
 
-	app.post("/api/new-comment", cors(corsOptions), actionController.newComment);
+	app.post("/api/new-post", actionController.newPost);
+
+	app.post("/api/new-comment", actionController.newComment);
+
+	app.get("/api/posts/:userId", loadController.getRelevantPosts);
+
+	app.get("/api/posts/user/:profile", loadController.getUserPosts);
 
 	app.get(
-		"/api/posts/:userId",
-		cors(corsOptions),
-		loadController.getRelevantPosts
+		"api/posts/user/more/:profile/:postId",
+		loadController.getMoreUserPosts
 	);
 
-	app.get(
-		"/api/posts/more/:userId/:postId",
-		cors(corsOptions),
-		loadController.getMorePosts
-	);
+	app.get("/api/posts/more/:userId/:postId", loadController.getMorePosts);
 
-	app.post(
-		"/api/posts/like/:postId",
-		cors(corsOptions),
-		actionController.getLikes
-	);
+	app.post("/api/posts/like/:postId", actionController.getLikes);
 
 	app.get(
 		"/api/posts/user-like/:currentUserId/:postId",
-		cors(corsOptions),
 		loadController.userLikeCheck
 	);
 
-	app.get(
-		"/api/all-users/:currentUserId",
-		cors(corsOptions),
-		loadController.getAllUsers
-	);
+	app.get("/api/all-users/:currentUserId", loadController.getAllUsers);
 };
