@@ -17,7 +17,7 @@ db.on("error", console.error.bind(console, "mongo connection error"));
 const app = express();
 
 const corsOptions = {
-	origin: "http://localhost:3000",
+	origin: process.env.CORS,
 	optionsSuccessStatus: 200,
 };
 
