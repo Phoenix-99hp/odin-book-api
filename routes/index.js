@@ -1,28 +1,6 @@
 const loginController = require("../controllers/loginController");
 const actionController = require("../controllers/actionController");
 const loadController = require("../controllers/loadController");
-// const multer = require("multer");
-// const upload = multer({ dest: 'uploads/' })
-
-// const storage = multer.memoryStorage({
-// 	destination: (req, file, cb) => {
-// 		cb(null, "uploads");
-// 	},
-// 	filename: (req, file, cb) => {
-// 		cb(null, file.fieldname + "-" + Date.now());
-// 	},
-// });
-
-// const upload = multer({ storage: storage });
-
-// const multipartMiddleware = (req, res, next) => {
-// 	req.rawBody = req.body;
-// 	if (req.headers["Content-Type"] === "multipart/form-data") {
-// 		req.body = req.body;
-// 		// upload.single("avatar");
-// 	}
-// 	next();
-// };
 
 module.exports = function (app) {
 	app.post("/api/login", loginController.loginRequest);
@@ -64,7 +42,7 @@ module.exports = function (app) {
 	app.get("/api/posts/user/:profile", loadController.getUserPosts);
 
 	app.get(
-		"api/posts/user/more/:profile/:postId",
+		"/api/posts/user/more/:profile/:postId",
 		loadController.getMoreUserPosts
 	);
 

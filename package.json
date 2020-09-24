@@ -1,25 +1,27 @@
 {
-  "name": "odin-book-api",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "nodemon app.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "dotenv": "^8.2.0",
-    "express": "^4.17.1",
-    "express-formidable": "^1.2.0",
-    "formidable": "^1.2.2",
-    "mongoose": "^5.10.0",
-    "multer": "^1.4.2",
-    "passport": "^0.4.1",
-    "passport-facebook": "^3.0.0",
-    "sharp": "^0.26.0"
-  }
+	"name": "odin-book-api",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"start": "node app.js",
+		"heroku-postbuild": "node seeder/seed.js",
+		"seed": "node seeder/seed.js"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"bcryptjs": "^2.4.3",
+		"cors": "^2.8.5",
+		"dotenv": "^8.2.0",
+		"express": "^4.17.1",
+		"express-formidable": "^1.2.0",
+		"formidable": "^1.2.2",
+		"mongoose": "^5.10.0",
+		"multer": "^1.4.2",
+		"passport": "^0.4.1",
+		"passport-facebook": "^3.0.0",
+		"sharp": "^0.26.0"
+	}
 }

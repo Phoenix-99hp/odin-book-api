@@ -2,14 +2,20 @@ const db = require("../models");
 
 exports.sendFriendRequest = (req, res) => {
 	db.User.findOne({ username: req.body.username }).exec((err, result) => {
+		console.log(result, "RESULT");
 		if (err) {
 			console.log(err);
 			return;
+		} else if (!result) {
+			res.json(null);
 		} else if (
 			result.friendRequests.filter(
 				(request) => request == req.body.currentUser
 			)[0] !== undefined
 		) {
+			res.json(null);
+		} else if (result._id === req.body.currentUser) {
+			console.log("hello");
 			res.json(null);
 		} else {
 			db.User.findOneAndUpdate(
@@ -173,12 +179,7 @@ exports.getLikes = (req, res) => {
 	db.Post.findById(req.params.postId).exec((err, result) => {
 		if (err) {
 			console.log(err);
-		}
-		//  else if (result.likes.includes(req.body.currentUser)) {
-		// 	console.log("caught!");
-		// 	res.json(null);
-		// }
-		else if (req.body.likeUnlike === "Like") {
+		} else if (req.body.likeUnlike === "Like") {
 			db.Post.findByIdAndUpdate(req.params.postId, {
 				$push: { likes: req.body.currentUser },
 			}).exec((err, result) => {

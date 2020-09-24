@@ -1,7 +1,6 @@
 const db = require("../models");
 
 exports.getRelevantPosts = (req, res) => {
-	console.log("GETTING POSTS");
 	db.Post.find({ user: req.params.userId })
 		.sort({ _id: -1 })
 		.limit(10)
@@ -55,14 +54,12 @@ exports.getRelevantPosts = (req, res) => {
 								});
 							}
 							combined.splice(10);
-							console.log(combined, "COMBINED");
 							res.json(combined);
 						})
 						.catch((err) => {
 							console.log(err);
 						});
 				} else {
-					console.log("REAL", combined);
 					res.json(combined);
 				}
 			} else {
@@ -102,7 +99,6 @@ exports.getRelevantPosts = (req, res) => {
 							};
 							findFriends()
 								.then(() => {
-									console.log("Final", combined);
 									combined.sort((a, b) => {
 										return b.timestamp - a.timestamp;
 									});
@@ -113,6 +109,7 @@ exports.getRelevantPosts = (req, res) => {
 									console.log(err);
 								});
 						} else {
+							console.log("NULL");
 							res.json(null);
 						}
 					}
@@ -132,19 +129,24 @@ exports.getMorePosts = (req, res) => {
 			},
 		})
 		.exec((err, result) => {
-			if (result) {
+			console.log(result, "RESULTTTTTT");
+			if (result[0]) {
 				let morePosts = result.filter((post, index) => {
 					return post._id < req.params.postId;
 				});
+				console.log(morePosts, "MORE");
 				if (morePosts[0]) {
+					console.log(morePosts[0].user.friends, "MOREPOSTS0");
 					if (morePosts[0].user.friends[0]) {
 						const findFriends = async () => {
-							for (let friend of result[0].user.friends) {
+							console.log("FF");
+							for (let friend of morePosts[0].user.friends) {
 								await returnFriend(friend);
 							}
 							return;
 						};
 						const returnFriend = (x) => {
+							console.log("RETURN FRIEND");
 							return new Promise((resolve, reject) => {
 								db.Post.find({ user: x })
 									.populate("user")
@@ -156,24 +158,19 @@ exports.getMorePosts = (req, res) => {
 									})
 									.sort({ _id: -1 })
 									.exec((err, resultFriends) => {
-										// let filteredFriends = resultFriends.filter((post, index) => {
-										//     return post._id < req.params.postId;
-										// });
 										if (resultFriends[0]) {
-											morePosts = [...morePosts, resultFriends];
-											resolve(morePosts);
-										}
-										// else if (filteredFriends[0] && index === result[0].user.friends.length - 1) {
-										//     morePosts = [...morePosts, filteredFriends];
-										//     resolve(morePosts);
-										// }
-										// else if (!filteredFriends[0] && index !== result[0].user.friends.length - 1) {
-										//     return;
-										// }
-										// else if (!filteredFriends[0] && index === result[0].user.friends.length - 1) {
-										//     resolve(morePosts);
-										// }
-										else {
+											let resFriendsPost = resultFriends.filter(
+												(post, index) => {
+													return post._id < req.params.postId;
+												}
+											);
+											if (resFriendsPost[0]) {
+												morePosts = [...morePosts, ...resFriendsPost];
+												resolve(morePosts);
+											} else {
+												resolve(morePosts);
+											}
+										} else {
 											resolve(morePosts);
 										}
 									});
@@ -181,21 +178,137 @@ exports.getMorePosts = (req, res) => {
 						};
 						findFriends()
 							.then(() => {
-								const hasMore = morePosts.length;
+								console.log("ALMOST THERE");
+								const hasMore = morePosts.length - 10;
 								morePosts.sort((a, b) => {
 									return b.timestamp - a.timestamp;
 								});
 								morePosts.splice(10);
-								console.log("morePosts final", morePosts);
 								res.json({ additionalPosts: morePosts, hasMore: hasMore });
 							})
 							.catch((err) => {
 								console.log(err);
 							});
 					}
+				} else {
+					if (result[0]) {
+						if (result[0].user.friends[0]) {
+							const findFriends = async () => {
+								for (let friend of result[0].user.friends) {
+									await returnFriend(friend);
+								}
+								return;
+							};
+							const returnFriend = (x) => {
+								return new Promise((resolve, reject) => {
+									db.Post.find({ user: x })
+										.populate("user")
+										.populate({
+											path: "comments",
+											populate: {
+												path: "user",
+											},
+										})
+										.sort({ _id: -1 })
+										.exec((err, resultFriends) => {
+											if (resultFriends[0]) {
+												let resFriendsPost = resultFriends.filter(
+													(post, index) => {
+														return post._id < req.params.postId;
+													}
+												);
+												if (resFriendsPost[0]) {
+													morePosts = [...morePosts, ...resFriendsPost];
+													resolve(morePosts);
+												} else {
+													resolve(morePosts);
+												}
+											} else {
+												resolve(morePosts);
+											}
+										});
+								});
+							};
+							findFriends()
+								.then(() => {
+									console.log("ALMOST THERE");
+									const hasMore = morePosts.length - 10;
+									morePosts.sort((a, b) => {
+										return b.timestamp - a.timestamp;
+									});
+									morePosts.splice(10);
+									res.json({ additionalPosts: morePosts, hasMore: hasMore });
+								})
+								.catch((err) => {
+									console.log(err);
+								});
+						} else {
+							console.log("MYSTERY");
+						}
+					}
 				}
 			} else {
-				res.json(null);
+				console.log("LAST ELSE");
+				db.User.findOne({ _id: req.params.userId })
+					.populate("friends")
+					.exec((err, result) => {
+						let morePosts = [];
+						if (result) {
+							if (result.friends[0]) {
+								const findFriends = async () => {
+									for (let friend of result.friends) {
+										await returnFriend(friend);
+									}
+									return;
+								};
+								const returnFriend = (x) => {
+									return new Promise((resolve, reject) => {
+										db.Post.find({ user: x })
+											.populate("user")
+											.populate({
+												path: "comments",
+												populate: {
+													path: "user",
+												},
+											})
+											.sort({ _id: -1 })
+											.exec((err, resultFriends) => {
+												if (resultFriends[0]) {
+													let resFriendsPost = resultFriends.filter(
+														(post, index) => {
+															return post._id < req.params.postId;
+														}
+													);
+													if (resFriendsPost[0]) {
+														morePosts = [...morePosts, ...resFriendsPost];
+														resolve(morePosts);
+													} else {
+														resolve(morePosts);
+													}
+												} else {
+													resolve(morePosts);
+												}
+											});
+									});
+								};
+								findFriends()
+									.then(() => {
+										const hasMore = morePosts.length - 10;
+										morePosts.sort((a, b) => {
+											return b.timestamp - a.timestamp;
+										});
+										morePosts.splice(10);
+										res.json({ additionalPosts: morePosts, hasMore: hasMore });
+									})
+									.catch((err) => {
+										console.log(err);
+									});
+							}
+						} else {
+							console.log("NULL");
+							res.json(null);
+						}
+					});
 			}
 		});
 };
@@ -218,9 +331,6 @@ exports.getAllUsers = (req, res) => {
 			const filteredCurrent = result.filter((user) => {
 				return user._id.toString() !== req.params.currentUserId.toString();
 			});
-			// const filteredFriends = filteredCurrent.filter((user) => {
-			// 	return user.friends.includes(req.params.currentUserId) === false;
-			// });
 			res.json(filteredCurrent);
 		} else {
 			res.json(null);
@@ -248,7 +358,6 @@ exports.getUserPosts = (req, res) => {
 						console.log(err);
 					} else if (resultTwo) {
 						res.json(resultTwo);
-						console.log(resultTwo);
 					} else {
 						res.json(null);
 					}
@@ -260,6 +369,7 @@ exports.getUserPosts = (req, res) => {
 };
 
 exports.getMoreUserPosts = (req, res) => {
+	console.log("getMoreUserPosts");
 	db.User.findOne({ username: req.params.profile }).exec((err, result) => {
 		if (err) {
 			console.log(err);
@@ -274,35 +384,21 @@ exports.getMoreUserPosts = (req, res) => {
 					},
 				})
 				.exec((error, resultTwo) => {
+					console.log("RES2", resultTwo);
 					if (error) {
 						console.log(error);
 					} else {
 						let morePosts = resultTwo.filter((post, index) => {
 							return post._id < req.params.postId;
 						});
-						const hasMore = morePosts.length;
+						const hasMore = morePosts.length - 10;
 						morePosts.sort((a, b) => {
 							return b.timestamp - a.timestamp;
 						});
 						morePosts.splice(10);
-						console.log("result final", morePostso);
 						res.json({ additionalPosts: morePosts, hasMore: hasMore });
 					}
 				});
 		}
 	});
 };
-
-// exports.getProfile = (req, res) => {
-// 	db.User.findOne(req.params.username)
-// 	.populate()
-// 	.exec((err, result) => {
-// 		if (err) {
-// 			console.log(err);
-// 		} else if (result.likes.includes(req.params.currentUserId)) {
-// 			res.json(true);
-// 		} else {
-// 			res.json(false);
-// 		}
-// 	});
-// };
