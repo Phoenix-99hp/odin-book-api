@@ -10,8 +10,11 @@ exports.loginRequest = (req, res) => {
 				msg:
 					"Something went wrong. Make sure the username you entered is valid",
 			});
-		} else {
-			console.log(req.body.password, results.password);
+		} 
+		else if(!results) {
+			res.json(null);
+		}
+		else {
 			bcrypt.compare(req.body.password, results.password, (error, response) => {
 				if (response) {
 					res.json(results);
