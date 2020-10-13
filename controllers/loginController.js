@@ -11,6 +11,7 @@ exports.loginRequest = (req, res) => {
 					"Something went wrong. Make sure the username you entered is valid",
 			});
 		} else {
+			console.log(req.body.password, results.password);
 			bcrypt.compare(req.body.password, results.password, (error, response) => {
 				if (response) {
 					res.json(results);
